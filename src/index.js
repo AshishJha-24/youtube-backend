@@ -16,7 +16,7 @@ connectDB()
         console.log(`unable to communicate with database `,error);
     })
     app.listen(process.env.PORT || 8000 ,()=>{
-        console.log(`Server is running at prot:  ${process.env.PORT}`)
+        console.log(`⨷ Server is running at prot:  ${process.env.PORT}`)
     })
 })
 .catch((error)=>{
