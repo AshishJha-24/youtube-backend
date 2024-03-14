@@ -1,6 +1,6 @@
 import mongoose,{Schema} from "mongoose"
 import bcrypt from "bcrypt"
-import  Jwt  from "jsonwebtoken"
+import  jwt  from "jsonwebtoken"
 const userSchema = new Schema({
 
     username:{
@@ -41,7 +41,9 @@ const userSchema = new Schema({
         type:String,
         required:[true,"password is required"]
     },
+
     refreshToken:{
+        
         type:String
     }
 
