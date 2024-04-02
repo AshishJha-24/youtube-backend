@@ -1,1 +1,1 @@
-# Backed fro youtube Like application
+# Backed for YouTube Like application
