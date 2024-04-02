@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
@@ -169,8 +170,8 @@ const logoutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
     req.user._id,
     {
-      $set: {
-        refreshToken: undefined,
+      $unset: {
+        refreshToken: 1
       },
     },
     {
@@ -237,12 +238,13 @@ try {
 const changeCurrentPassword=asyncHandler(async (req,res)=>{
   const {oldPassword, newPassword} = req.body;
          const user =await User.findById(req.user?._id);
-       const isPasswordCorrect= await  user.ispasswordCorrect(oldPassword);
-       if(!ispasswordCorrect){
+  
+       const isPasswordCorrect = await  user.isPasswordCorrect(oldPassword);
+       if(!isPasswordCorrect){
         throw new ApiError(400,"Invalid old password");
        }
 
-       user.password=newpassword;
+       user.password=newPassword;
       await user.save({validateBeforeSave:false})
 
       return res.status(200)
@@ -252,18 +254,20 @@ const changeCurrentPassword=asyncHandler(async (req,res)=>{
 
 const getCurrentUser=asyncHandler(async (req,res)=>{
   return res.status(200).
-    json(new ApiResponse(200,req,user,"current user fectched successfully"));
+    json(new ApiResponse(200,req.user,"current user fectched successfully"));
 })
 
 const updateAccountDetails=asyncHandler(async (req,res)=>{
    const {fullName,email}=req.body;
-   if(!fullName&& !email){
+
+
+   if(!fullName && !email){
     throw new ApiError(400,"All fields are required")
    }
           const user=await User.findByIdAndUpdate(
               req.user?._id,
               {
-                $ser:{
+                $set:{
                   fullName,
                   email
                 }
@@ -329,6 +333,8 @@ const updateUserCoverImage= asyncHandler(async (req,res)=>{
 const getUserChannelProfile=asyncHandler(async (req,res)=>{
    const {username}=req.params;
 
+   console.log(username)
+
    if(!username?.trim()){
     throw new ApiError(400,"username is missing");
    }
@@ -365,7 +371,7 @@ const getUserChannelProfile=asyncHandler(async (req,res)=>{
           $size:"$subscribedTo"
         },
         isSubscribed:{
-          $condition:{
+          $cond:{
             if:{$in:[req.user?._id,"$subscribers.subscriber"]},
             then:true,
             else:false
@@ -390,14 +396,13 @@ const getUserChannelProfile=asyncHandler(async (req,res)=>{
 
    ])
 
-   console.log(channel);
+
 
    if(!channel?.length){
     throw new ApiError(404,"Channel does not exit");
    }
 
-   return 
-   res.status(200)
+   return res.status(200)
    .json(
     new ApiResponse(200,channel[0],"User channel fetched successfully")
    )
@@ -437,9 +442,12 @@ const getWatchHistory=asyncHandler(async (req,res)=>{
             }
           },
           {
-            owner:{
-              $first:"$owner"
+            $addFields:{
+              owner:{
+                $first:"$owner"
+              }
             }
+            
           }
         ]
       }
