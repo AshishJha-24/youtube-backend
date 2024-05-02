@@ -22,7 +22,7 @@ const getVideoComment = asyncHandler(async (req, res) => {
   const video = await Video.findById(videoId);
 
   if (!video) {
-    throw new ApiError(404, "Video not foudn");
+    throw new ApiError(404, "Video not found");
   }
 
   const allComment = await Comment.aggregate([
@@ -53,7 +53,7 @@ const getVideoComment = asyncHandler(async (req, res) => {
           $size: "$commentLikes",
         },
         commentOwner: {
-          $fist: "$commentOwenr",
+          $first: "$commentOwner",
         },
         isLiked: {
           $cond: {
@@ -64,6 +64,21 @@ const getVideoComment = asyncHandler(async (req, res) => {
         },
       },
     },
+    {
+
+      $project:{
+        commentOwner:{
+         password:0,
+         coverImage:0,
+         watchHistory:0,
+         createdAt:0,
+         updatedAt:0,
+         refreshToken:0,
+
+        }
+      }
+    },
+
 
     {
       $sort: {
@@ -95,6 +110,10 @@ const addComment = asyncHandler(async (req, res) => {
   if (!content) {
     throw new ApiError(400, "Content is required");
   }
+    const video=   await Video.findById(videoId);
+    if(!video){
+      throw new ApiError(404,"Video not found ")
+    }
 
   const comment = await Comment.create({
     content,
@@ -111,9 +130,10 @@ const addComment = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, comment, "Comment is successfully created"));
 });
 
+
 //update comment
 const updateComment = asyncHandler(async (req, res) => {
-  const commentId = req.params;
+  const {commentId} = req.params;
   const { content } = req.body;
 
   if (!isValidObjectId(commentId)) {
@@ -131,7 +151,8 @@ const updateComment = asyncHandler(async (req, res) => {
     throw new ApiError(404,"comment not found");
 
   }
-  if (comment.owner.toString() !== req.user?._id) {
+
+  if (comment.owner.toString() !== req.user?._id.toString()) {
     throw new ApiError(400, "can not update other comment");
   }
 
@@ -164,7 +185,7 @@ const deleteComment=asyncHandler(async(req,res)=>{
     const comment = await Comment.aggregate([
         {
             $match:{
-                _id:new mongoose.Types.objectId(commentId)
+                _id:new mongoose.Types.ObjectId(commentId)
             }
         },
         {
@@ -183,11 +204,12 @@ const deleteComment=asyncHandler(async(req,res)=>{
         }
     ]);
 
+
     if(comment.length===0){
         throw new ApiError(404,"Comment not found");
     }
 
-    if(comment[0].owner.toString()!==req.user._id && comment[0].videoOwner.owner.toString()!==req.user._id){
+    if(comment[0].owner.toString()!==req.user._id.toString() && comment[0].videoOwner.owner.toString()!==req.user._id.toString()){
         throw new ApiError(400,"Your are unanthorized to delete this comment");
     }
 

@@ -1,4 +1,4 @@
-import mongoose,{Schema} from mongoose
+import mongoose,{Schema} from "mongoose"
 
 const playListSchema= new Schema({
     name:{
@@ -11,12 +11,12 @@ const playListSchema= new Schema({
     },
     videos:[
         {
-        type:Schema.Types.objectId,
+        type:Schema.Types.ObjectId,
         ref:"Video"
         }
     ],
     owner:{
-        type:Schema.Types.objectId,
+        type:Schema.Types.ObjectId,
         ref:"User"
     }
 },
@@ -27,3 +27,4 @@ const playListSchema= new Schema({
 
 
 export const PlayList= mongoose.model("PlayList",playListSchema);
+
