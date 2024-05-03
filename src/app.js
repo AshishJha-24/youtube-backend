@@ -30,6 +30,7 @@ import videoRouter from "./routes/video.routes.js"
 import dashboardRouter from "./routes/dashboard.routes.js";
 import healthcheckRouter from "./routes/healthcheck.routes.js"
 import likeRouter from "./routes/likes.routes.js"
+import playlistRouter from "./routes/playlist.routes.js"
 app.use("/api/v1/healthcheck",healthcheckRouter)
 
 //routes declaration
@@ -41,5 +42,6 @@ app.use("/api/v1/comment",commentRouter)
 app.use("/api/v1/video",videoRouter)
 app.use("/api/v1/dashboard",dashboardRouter);
 app.use("/api/v1/likes",likeRouter);
+app.use("/api/v1/playlist",playlistRouter);
 
 export {app};
