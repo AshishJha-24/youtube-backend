@@ -31,7 +31,9 @@ import dashboardRouter from "./routes/dashboard.routes.js";
 import healthcheckRouter from "./routes/healthcheck.routes.js"
 import likeRouter from "./routes/likes.routes.js"
 import playlistRouter from "./routes/playlist.routes.js"
+import subscriptionRouter from "./routes/subscription.routes.js"
 app.use("/api/v1/healthcheck",healthcheckRouter)
+
 
 //routes declaration
 app.use("/api/v1/users",userRouter)
@@ -43,5 +45,6 @@ app.use("/api/v1/video",videoRouter)
 app.use("/api/v1/dashboard",dashboardRouter);
 app.use("/api/v1/likes",likeRouter);
 app.use("/api/v1/playlist",playlistRouter);
+app.use("/api/v1/subscriptions",subscriptionRouter)
 
 export {app};
