@@ -5,7 +5,7 @@ import { uploadOnCloudinary ,deleteFromCloudinary } from "../utils/cloudinary.js
 import { ApiResponse } from "../utils/ApiResponse.js";
 import getPublicIdfromLink from "../utils/getPublicIdfromLink.js";
 import jwt from "jsonwebtoken";
-import mongoose from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
@@ -111,11 +111,15 @@ const loginUser = asyncHandler(async (req, res) => {
   // send cookies
   const { username, email, password } = req.body;
 
+  console.log(username, email, password );
+
   if (!username && !email) {
     throw new ApiError(400, "username or passowrd is required");
   }
 
   const user = await User.findOne({ $or: [{ username }, { email }] });
+
+  console.log(user);
 
   if (!user) {
     throw new ApiError(404, "user does not exist");
@@ -137,11 +141,12 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const options = {
     httpOnly: true,
-    secure: true,
+    secure:true
   };
 
-  return res
-    .status(200)
+ 
+
+ res.status(200)
     .cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options)
     .json(
@@ -339,18 +344,16 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 });
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
-  const { username } = req.params;
+  const { userId } = req.params;
 
-  console.log(username);
-
-  if (!username?.trim()) {
-    throw new ApiError(400, "username is missing");
+  if(!isValidObjectId(userId)){
+    throw new ApiError(404,"invalid userId");
   }
 
   const channel = await User.aggregate([
     {
       $match: {
-        username: username?.toLowerCase(),
+        _id: new mongoose.Types.ObjectId(userId),
       },
     },
 

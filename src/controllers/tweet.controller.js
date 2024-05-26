@@ -33,6 +33,61 @@ const getUserTweets = asyncHandler(async (req, res) => {
         owner: new mongoose.Types.ObjectId(userId),
       },
     },
+    {
+      $lookup:{
+        from:"users",
+        localField:"owner", 
+        foreignField:"_id",
+        as: "tweetOwner",
+      }
+    },
+    {
+      $lookup:{
+        from:"likes",
+        localField:"_id",
+        foreignField:"tweet",
+        as:"tweetLikes"
+      }
+    },
+    {
+      $addFields:{
+        tweetLikeCount:{
+          $size:"$tweetLikes",
+        },
+        tweetOwner:{
+          $first:"$tweetOwner"
+        },
+        isLiked:{
+          $cond:{
+            if:{$in:[req.user?._id, "$tweetLikes.likedBy"]},
+            then:true,
+            else:false
+          },
+           
+          }
+        }
+
+      },
+      {
+
+        $project:{
+          tweetOwner:{
+           password:0,
+           coverImage:0,
+           watchHistory:0,
+           createdAt:0,
+           updatedAt:0,
+           refreshToken:0,
+  
+          }
+        }
+      },
+      {
+        $sort: {
+          createdAt: -1,
+        },
+      }
+    
   ]);
 
   res
