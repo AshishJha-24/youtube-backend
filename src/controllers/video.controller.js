@@ -71,7 +71,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
       $search: {
         index: "videosearch",
         text: {
-          query: "testing",
+          query: query,
           path: ["title", "description"], // Search in only title and description
         },
       },
