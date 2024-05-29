@@ -420,41 +420,52 @@ const getWatchHistory = asyncHandler(async (req, res) => {
   const user = await User.aggregate([
     {
       $match: {
-        _id: new mongoose.Types.ObjectId(req.user._id),
+        _id: new mongoose.Types.ObjectId(req.user.id),
       },
     },
     {
+      $project: {
+        watchHistory: 1,
+      },
+    },
+    {
+      $unwind: '$watchHistory',
+    },
+    {
       $lookup: {
-        from: "videos",
-        localField: "watchHistory",
-        foreignField: "_id",
-        as: "watchHistory",
-        pipeline: [
-          {
-            $lookup: {
-              from: "users",
-              localField: "owner",
-              foreignField: "_id",
-              as: "owner",
-              pipeline: [
-                {
-                  $project: {
-                    fullName: 1,
-                    username: 1,
-                    avtar: 1,
-                  },
-                },
-              ],
-            },
-          },
-          {
-            $addFields: {
-              owner: {
-                $first: "$owner",
-              },
-            },
-          },
-        ],
+        from: 'videos',
+        localField: 'watchHistory',
+        foreignField: '_id',
+        as: 'watchHistoryDetails',
+      },
+    },
+    {
+      $unwind: '$watchHistoryDetails',
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'watchHistoryDetails.owner',
+        foreignField: '_id',
+        as: 'watchHistoryDetails.ownerDetails',
+      },
+    },
+    {
+      $addFields: {
+        'watchHistoryDetails.ownerDetails': {
+          $first: '$watchHistoryDetails.ownerDetails',
+        },
+      },
+    },
+    {
+      $group: {
+        _id: '$_id',
+        watchHistory: { $push: '$watchHistoryDetails' },
+      },
+    },
+    {
+      $project: {
+        'watchHistory.ownerDetails.password': 0, // Exclude sensitive fields if necessary
       },
     },
   ]);

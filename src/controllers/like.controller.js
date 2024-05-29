@@ -130,14 +130,14 @@ const getLikedVideos= asyncHandler(async ( req, res)=>{
                             from:"users",
                             localField:"owner",
                             foreignField:"_id",
-                            as:"userDetails",
+                            as:"ownerDetails",
                             
                         }
                     },
                     {
                         $addFields:{
-                           userDetails:{
-                            $first:"$userDetails"
+                          ownerDetails:{
+                            $first:"$ownerDetails"
                            }
                         }
                     }
@@ -171,7 +171,7 @@ const getLikedVideos= asyncHandler(async ( req, res)=>{
                     duration: 1,
                     createdAt: 1,
                     isPublished: 1,
-                    userDetails: {
+                    ownerDetails: {
                         username: 1,
                         fullName: 1,
                         avtar: 1,

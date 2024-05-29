@@ -1,6 +1,9 @@
 import { Video } from "../models/video.model.js";
 import { PlayList } from "../models/playList.model.js";
+import { Like } from "../models/like.model.js";
 import { ApiError } from "../utils/ApiError.js";
+import { User } from "../models/user.model.js";
+
 import {
   deleteFromCloudinary,
   uploadOnCloudinary,
@@ -19,7 +22,7 @@ async function removeLikesCommentsPlaylistWatchHistoryForVideo(videoId) {
 
     const getComments = await Comment.find({ video: videoId });
 
-    const commentsIds = getComments.map((comment = comment._id));
+    const commentsIds = getComments.map(comment=> comment._id);
 
     //Delete likes for the comments
     const commentLikeDelete = await Like.deleteMany({
@@ -32,7 +35,7 @@ async function removeLikesCommentsPlaylistWatchHistoryForVideo(videoId) {
     });
 
     //Remove video from playlist
-    const playlistDelete = await Playlist.updateMany(
+    const playlistDelete = await PlayList.updateMany(
       {},
       { $pull: { videos: videoId } }
     );
@@ -200,6 +203,11 @@ const getVideoById = asyncHandler(async (req, res) => {
   if (!isValidObjectId(videoId)) {
     throw new ApiError(400, "Invalid videoId");
   }
+  const videoById = await Video.findById(videoId);
+
+  if (!videoById) {
+    throw new ApiError(404,"Video not found");
+  }
 
   const video = await Video.aggregate([
     {$match:{
@@ -225,16 +233,75 @@ const getVideoById = asyncHandler(async (req, res) => {
       }
     },
     {
+      $lookup:{
+        from:"likes",
+        foreignField:"video",
+        localField:"_id",
+        as:"likesOnvideo",
+        pipeline:[
+          {
+            $addFields:{
+              
+            }
+          }
+        ]
+      }
+    },
+    
+    {
       $addFields:{
        ownerDetails:{
         $first:"$ownerDetails"
+       },
+       likes:{
+        $size:"$likesOnvideo"
+       },
+       isLiked:{
+        $cond:{
+          if:{
+            $in:[ req.user?._id, "$likesOnvideo.likedBy"]
+          },
+          then:true,
+          else:false
+        }
        }
+      }
+    },{
+      $project:{
+        likesOnvideo:0
       }
     }
   ])
   if (!video) {
     throw new ApiError(404, "Video not Found");
   }
+
+
+  const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    console.log(user)
+
+    const videoIndex = user.watchHistory.indexOf(videoId);
+    if (videoIndex !== -1) {
+      // If it exists, remove it
+      user.watchHistory.splice(videoIndex, 1);
+    }
+
+    // Add the videoId to the beginning of the history array
+    user.watchHistory.unshift(videoId);
+
+    // Save the updated user document
+   const addedVideoToHistory= await user.save({ validateBeforeSave: false });
+
+  
+if(!addedVideoToHistory){
+  throw new ApiError(500,"unable to add video to hitory");
+}
+
+videoById.views += 1;
+await videoById.save();
 
   res
     .status(200)
