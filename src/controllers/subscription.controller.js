@@ -100,6 +100,15 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
                         },
                     },
                 },
+                {
+                    $project:{
+                        _id:1,
+                        username:1,
+                        fullName:1,
+                        avtar:1,
+                        coverImage:1,
+                    }
+                }
               ]
             }
           },
@@ -122,31 +131,23 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
 
 // controller to return channel list to which user has subscribed
 const getSubscribedChannels = asyncHandler(async (req, res) => {
-    const { subscriberId } = req.params
+  
 
       const userId = req.user?._id;
       if(!userId){
         throw new ApiError(400,"You are not authorized");
       }
 
-    if(!isValidObjectId(subscriberId)){
-        throw new ApiError(400,"Invalid subscriber Id");
-    }
-
-    if(subscriberId.toString()!==userId.toString()){
-        throw new ApiError(400,"you can't see other user subscribed channel list");
-    }
-
     const subscribedChannelList= await  Subscription.aggregate([
         {
             $match:{
-                subscriber: new mongoose.Types.ObjectId(subscriberId)
+                subscriber: new mongoose.Types.ObjectId(userId)
             }
         },
         {
             $lookup:{
                 from:"users",
-                localField:"subscriber",
+                localField:"channel",
                 foreignField:"_id",
                 as:"subscribedChannel",
                 pipeline:[

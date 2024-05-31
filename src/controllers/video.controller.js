@@ -13,6 +13,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import mongoose, { isValidObjectId } from "mongoose";
 import getPublicIdfromLink from "../utils/getPublicIdfromLink.js";
 import { Comment } from "../models/comment.model.js";
+import { Subscription } from "../models/subscription.model.js";
 
 
 async function removeLikesCommentsPlaylistWatchHistoryForVideo(videoId) {
@@ -248,6 +249,7 @@ const getVideoById = asyncHandler(async (req, res) => {
       }
     },
     
+    
     {
       $addFields:{
        ownerDetails:{
@@ -266,7 +268,8 @@ const getVideoById = asyncHandler(async (req, res) => {
         }
        }
       }
-    },{
+    },
+    {
       $project:{
         likesOnvideo:0
       }
@@ -276,12 +279,53 @@ const getVideoById = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Video not Found");
   }
 
+   const isSubscribed=await Subscription.aggregate([
+    {
+      $match:{
+        channel:video[0].ownerDetails._id,
+      }
+    },
+    {
+      $group:{
+        _id:"$channel", // Group key
+        subscribers:{ $addToSet :"$subscriber" },
+        
+      }
+    },
+    {
+     $addFields:{
+      isSubscribed:{
+        $cond:{
+          if:{
+            $in:[req.user._id,"$subscribers"]
+          },
+          then:true,
+        else:false
+        },
+        
+      },
+      subscriberCount:{
+        $size:"$subscribers"
+      }
+     }
+    },{
+      $project:{
+        isSubscribed:1,
+        subscriberCount:1,
+      }
+    }
+    
+   ])
+
+   
+   video[0].isSubscribed=isSubscribed[0].isSubscribed;
+   video[0].subscriberCount=isSubscribed[0].subscriberCount;
+  
 
   const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    console.log(user)
 
     const videoIndex = user.watchHistory.indexOf(videoId);
     if (videoIndex !== -1) {
