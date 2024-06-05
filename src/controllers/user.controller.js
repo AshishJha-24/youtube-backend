@@ -443,6 +443,11 @@ const getWatchHistory = asyncHandler(async (req, res) => {
       $unwind: '$watchHistoryDetails',
     },
     {
+      $match:{
+        "watchHistoryDetails.isPublished":true,
+      }
+    },
+    {
       $lookup: {
         from: 'users',
         localField: 'watchHistoryDetails.owner',
@@ -467,9 +472,12 @@ const getWatchHistory = asyncHandler(async (req, res) => {
       $project: {
         'watchHistory.ownerDetails.password': 0, // Exclude sensitive fields if necessary
       },
-    },
+    }
+    
   ]);
 
+
+console.log(user)
   return res
     .status(200)
     .json(

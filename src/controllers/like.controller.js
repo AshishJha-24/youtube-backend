@@ -152,7 +152,12 @@ const getLikedVideos= asyncHandler(async ( req, res)=>{
                 $first:"$likedVideos"
              }
             }
-        },{
+        },
+        {
+          $match:{
+            "likedVideos.isPublished":true
+          }
+       },{
             $sort:{
                 createdAt:-1
             },

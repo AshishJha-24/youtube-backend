@@ -156,11 +156,18 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
 const publishVideo = asyncHandler(async (req, res) => {
   const { title, description, isPublished } = req.body;
+ 
 
   if (!title || !description || !isPublished) {
     throw new ApiError(400, "All fields are required");
   }
 
+ let publish;
+ if(isPublished==='true'){
+  publish=true
+ }else{
+  publish=false
+ }
   const localPathofVideo = req?.files?.video[0].path;
   console.log(localPathofVideo);
   if (!localPathofVideo) {
@@ -189,7 +196,7 @@ const publishVideo = asyncHandler(async (req, res) => {
     title,
     description,
     duration: video?.duration,
-    isPublished,
+    isPublished:publish,
     owner: req?.user._id,
   });
 
@@ -317,9 +324,13 @@ const getVideoById = asyncHandler(async (req, res) => {
     
    ])
 
-   
-   video[0].isSubscribed=isSubscribed[0].isSubscribed;
+   console.log(isSubscribed)
+   if(isSubscribed.length>0){
+ video[0].isSubscribed=isSubscribed[0].isSubscribed;
    video[0].subscriberCount=isSubscribed[0].subscriberCount;
+   }
+   
+  
   
 
   const user = await User.findById(req.user._id);
@@ -432,19 +443,19 @@ const updateVideo = asyncHandler(async (req, res) => {
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  const { status } = req.body;
-  if (!status) {
-    throw new ApiError(400, "status is required");
-  }
+ 
+  
   if (!isValidObjectId(videoId)) {
     throw new ApiError(400, "invalid Object");
   }
+
+ const isVideo = await Video.findById(videoId);
 
   const video = await Video.findByIdAndUpdate(
     videoId,
     {
       $set: {
-        isPublished: status,
+        isPublished: !isVideo.isPublished,
       },
     },
     {
