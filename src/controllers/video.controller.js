@@ -426,8 +426,11 @@ const updateVideo = asyncHandler(async (req, res) => {
     if (!updatedVideoDetail) {
       throw new ApiError(500, "unable to update video details");
     }
-    const publicIdThumbnail = getPublicIdfromLink(oldThumbnail);
-    await deleteFromCloudinary(publicIdThumbnail);
+    if(newThumbnailPath){
+      const publicIdThumbnail = getPublicIdfromLink(oldThumbnail);
+      await deleteFromCloudinary(publicIdThumbnail);
+    }
+  
   }
 
   res

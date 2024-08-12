@@ -23,6 +23,11 @@ const createTweet = asyncHandler(async (req, res) => {
 
 const getUserTweets = asyncHandler(async (req, res) => {
   const { userId } = req.params;
+  const { page = 1, limit = 10 } = req.query;
+  const pageNumber = parseInt(page);
+  const limitofComment = parseInt(limit);
+  const skip = (pageNumber - 1) * limitofComment;
+  const pageSize = limitofComment;
   if (!userId) {
     throw new ApiError(400, "channel id is required");
   }
@@ -86,7 +91,13 @@ const getUserTweets = asyncHandler(async (req, res) => {
         $sort: {
           createdAt: -1,
         },
-      }
+      },
+      {
+        $skip: skip,
+      },
+      {
+        $limit: pageSize,
+      },
     
   ]);
 
